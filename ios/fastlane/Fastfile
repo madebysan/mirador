@@ -1,0 +1,81 @@
+# Mirador receiver (iPhone): personal TestFlight builds for internal testing only.
+# The App Store Connect API key is read from ignored fastlane/.env; the relay address from ignored ../local/relay.env.
+default_platform(:ios)
+
+APP_IDENTIFIER = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+PROJECT = "AndroidViewer.xcodeproj"
+SCHEME = "AndroidViewer"
+
+def app_store_api_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
+    issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+    key_filepath: ENV.fetch("APP_STORE_CONNECT_KEY_FILEPATH"),
+    duration: 1200,
+    in_house: false
+  )
+end
+
+def relay_url
+  env = File.expand_path("../../local/relay.env", __dir__)
+  return "" unless File.exist?(env)
+  File.readlines(env).map(&:strip).find { |line| line.start_with?("RELAY_URL=") }.to_s.delete_prefix("RELAY_URL=")
+end
+
+platform :ios do
+  before_all do
+    ENV["FASTLANE_HIDE_CHANGELOG"] = "1"
+    ENV["FASTLANE_SKIP_UPDATE_CHECK"] = "1"
+  end
+
+  desc "Read-only: is the bundle ID registered, does the App Store Connect record exist, latest builds"
+  lane :status do
+    app_store_api_key
+    bundle = Spaceship::ConnectAPI::BundleId.find(APP_IDENTIFIER)
+    UI.message("Bundle ID registered: #{!bundle.nil?}")
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    if app.nil?
+      UI.important("No App Store Connect record for #{APP_IDENTIFIER} yet.")
+    else
+      UI.message("App record: #{app.name}")
+      builds = Spaceship::ConnectAPI::Build.all(app_id: app.id, sort: "-uploadedDate", limit: 3)
+      builds.each { |build| UI.message("Build #{build.version}: #{build.processing_state}") }
+    end
+  end
+
+  desc "Register the explicit bundle ID (needed for App Store signing)"
+  lane :register_bundle do
+    app_store_api_key
+    if Spaceship::ConnectAPI::BundleId.find(APP_IDENTIFIER)
+      UI.success("Bundle ID already registered.")
+    else
+      Spaceship::ConnectAPI::BundleId.create(name: "Mirador Receiver", identifier: APP_IDENTIFIER, platform: "IOS")
+      UI.success("Registered #{APP_IDENTIFIER}.")
+    end
+  end
+
+  desc "Archive a Release build and upload it to TestFlight for internal testing"
+  lane :beta do
+    api_key = app_store_api_key
+    url = relay_url
+    UI.user_error!("Set RELAY_URL in local/relay.env first.") unless url.start_with?("https://")
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    UI.user_error!("Create the App Store Connect record first.") if app.nil?
+    latest = app_store_build_number(api_key: api_key, app_identifier: APP_IDENTIFIER, live: false, initial_build_number: 1) rescue 1
+    build = [latest.to_i + 1, Time.now.strftime("%y%m%d%H%M").to_i].max
+    increment_build_number(xcodeproj: PROJECT, build_number: build.to_s)
+    key_path = File.expand_path(ENV.fetch("APP_STORE_CONNECT_KEY_FILEPATH"))
+    build_app(
+      project: PROJECT, scheme: SCHEME, configuration: "Release",
+      export_method: "app-store", output_directory: "../local/iphone-viewer-check/testflight",
+      output_name: "Mirador.ipa", clean: true,
+      derived_data_path: "../local/iphone-viewer-check/ReleaseBuild",
+      cloned_source_packages_path: "../local/iphone-viewer-check/packages",
+      xcargs: "AV_RELAY_URL=#{url} -allowProvisioningUpdates " \
+              "-authenticationKeyPath #{key_path} -authenticationKeyID #{ENV.fetch('APP_STORE_CONNECT_KEY_ID')} " \
+              "-authenticationKeyIssuerID #{ENV.fetch('APP_STORE_CONNECT_ISSUER_ID')}",
+      export_options: { signingStyle: "automatic" }
+    )
+    upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true, distribute_external: false)
+  end
+end

@@ -1,0 +1,14 @@
+// Signing for the iPhone receiver.
+//
+// To build on your own iPhone, create local/Signing.local.xcconfig at the repository root
+// (Git ignores local/) with your Apple team and a bundle ID of your own:
+//
+//   DEVELOPMENT_TEAM = ABCDE12345
+//   PRODUCT_BUNDLE_IDENTIFIER = com.yourname.mirador
+//
+// Your team ID is in Xcode under Settings > Accounts, or at developer.apple.com > Membership.
+
+DEVELOPMENT_TEAM =
+PRODUCT_BUNDLE_IDENTIFIER = com.san.androidviewer
+
+#include? "../local/Signing.local.xcconfig"

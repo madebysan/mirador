@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+// The optional internet relay address lives in ignored local configuration, never in Git.
+def relayUrl = ''
+def relayEnv = rootProject.file('../local/relay.env')
+if (relayEnv.exists()) relayEnv.eachLine { line -> if (line.startsWith('RELAY_URL=')) relayUrl = line.substring(10).trim() }
+
+android {
+    namespace 'com.san.androidsender'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.san.androidsender'
+        minSdk 30
+        targetSdk 34
+        versionCode 1
+        versionName '0.1.0'
+        ndk { abiFilters 'arm64-v8a' }
+        buildConfigField 'String', 'RELAY_URL', "\"${relayUrl}\""
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildTypes { release { minifyEnabled false } }
+    buildFeatures { buildConfig true }
+}
+
+dependencies {
+    implementation 'io.github.webrtc-sdk:android:150.7871.01'
+    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    testImplementation 'junit:junit:4.13.2'
+}
