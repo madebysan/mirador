@@ -43,14 +43,14 @@ Mirador is a personal project, tested on one iPhone 17 Pro and one Nothing phone
 
 ## Install
 
-There is no App Store, Play Store or release download. You build both apps yourself: the iPhone app with Xcode and your own Apple team, and the Android app with JDK 17 and the Android SDK. After adding your team to `local/Signing.local.xcconfig`:
+There is no App Store, Play Store or release download. You build both apps yourself. You need an iPhone with iOS 17 or later, an Android phone with Android 11 or later (arm64), a Mac with a recent Xcode, JDK 17 and the Android SDK.
 
-```sh
-ios/script/build.sh
-android/script/build.sh
-```
+1. **iPhone:** create `local/Signing.local.xcconfig` with your Apple team ID and a bundle ID of your own, then run `ios/script/build.sh` or build in Xcode. Details are in the [iPhone README](ios/README.md#build). A free Apple account works, but its builds stop opening after 7 days.
+2. **Android:** run `android/script/build.sh` and install the APK with `adb install -r`. Details are in the [Android README](android/README.md#build).
+3. **Pair:** on Android, tap Enable, then Pair a Receiver; on the iPhone, tap Pair Android Phone and scan the code.
+4. **Optional relay:** to watch from another network without Tailscale, deploy your own [relay](relay/README.md) and put its address in `local/relay.env` before building both apps. Otherwise, install Tailscale on both phones, or keep them on the same Wi-Fi.
 
-The steps, the optional relay and what has been tested are in [docs/development.md](docs/development.md).
+Everything under `local/` (signing, relay address, pairing files, test reports and build caches) and `dist/` (personal builds) is ignored by Git and stays on your Mac. Mirador was called Android Viewer until October 2026, so the app identifiers keep the old name (`com.san.androidviewer`, `com.san.androidsender`); use your own bundle ID when you build the iPhone app.
 
 ---
 
