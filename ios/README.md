@@ -46,4 +46,4 @@ The screen is styled as a piece of hardware: an LCD with the state, link and ela
 
 ## Limits
 
-Tested on one iPhone 17 Pro with one Android phone. QR scanning in poor light, VoiceOver, audio route changes and long sessions haven't been checked in depth. `fastlane/` has lanes for internal TestFlight uploads; they need your own App Store Connect API key in `ios/fastlane/.env`.
+Tested on one iPhone 17 Pro with one Android phone. QR scanning in poor light, VoiceOver, audio route changes and long sessions haven't been checked in depth.

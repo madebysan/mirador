@@ -27,6 +27,4 @@ xcuserdata/
 *.ipa
 .wrangler/
 .dev.vars
-ios/fastlane/report.xml
-ios/fastlane/README.md
 

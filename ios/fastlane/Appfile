@@ -1,5 +1,0 @@
-# The bundle ID and team come from the same local signing file the Xcode build uses (see ../Signing.xcconfig).
-signing = File.join(__dir__, "../../local/Signing.local.xcconfig")
-settings = File.exist?(signing) ? File.readlines(signing).filter_map { |line| line.strip.match(/\A(\w+)\s*=\s*(\S+)\z/)&.captures }.to_h : {}
-app_identifier(settings.fetch("PRODUCT_BUNDLE_IDENTIFIER", "com.san.androidviewer"))
-team_id(settings["DEVELOPMENT_TEAM"]) if settings["DEVELOPMENT_TEAM"]
